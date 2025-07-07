@@ -2,37 +2,86 @@ import React, { useState } from 'react';
 import './QuestionForm.css';
 import QuestionViewer from './QuestionViewer';
 
-
+const subjectTopics = {
+  "OS": [
+    "Process Management",
+    "Threading & Concurrency",
+    "CPU Scheduling",
+    "Deadlocks",
+    "Memory Management",
+    "Paging & Segmentation",
+    "Virtual Memory",
+    "File System",
+    "Disk Scheduling",
+    "Synchronization",
+    "System Calls",
+    "Interprocess Communication (IPC)",
+    "Banker's Algorithm",
+    "Operating System Architecture",
+    "I/O Management"
+  ],
+  "DBMS": [
+    "ER Model",
+    "Relational Model",
+    "Normalization",
+    "SQL Queries",
+    "Transactions & Concurrency Control",
+    "Indexing",
+    "Joins",
+    "ACID Properties",
+    "File Organization"
+  ],
+  "DSA": [
+    "Arrays & Strings",
+    "Linked List",
+    "Stacks & Queues",
+    "Trees",
+    "Graphs",
+    "Searching & Sorting",
+    "Dynamic Programming",
+    "Greedy Algorithms",
+    "Recursion & Backtracking"
+  ],
+  "CN": [
+    "OSI Model",
+    "TCP/IP Model",
+    "IP Addressing & Subnetting",
+    "Routing Algorithms",
+    "Switching Techniques",
+    "Application Layer Protocols",
+    "Transport Layer Protocols",
+    "Network Security",
+    "Data Link Layer Protocols"
+  ]
+};
 
 const QuestionForm = ({ questions, setQuestions, selectedAnswers, setSelectedAnswers, showResults, setShowResults }) => {
-  const [grade, setGrade] = useState('');
+  const [subject, setSubject] = useState('');
   const [topic, setTopic] = useState('');
   const [difficulty, setDifficulty] = useState('');
-  const [noOfQue, setNoOfQue] = useState(5); // default to 5 change
-  // const [questions, setQuestions] = useState([]);
-  // const [selectedAnswers, setSelectedAnswers] = useState({});
-  // const [showResults, setShowResults] = useState(false);
-  const [showQuiz, setShowQuiz] = useState(false); // NEW: controls switching to quiz page
+  const [noOfQue, setNoOfQue] = useState(5);
+  const [showQuiz, setShowQuiz] = useState(false);
+
+  const handleSubjectChange = (e) => {
+    setSubject(e.target.value);
+    setTopic('');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const payload = { grade, topic, difficulty, noOfQue };
+    const payload = { subject, topic, difficulty, noOfQue };
 
     try {
       const response = await fetch('http://127.0.0.1:5001/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
       const data = await response.json();
 
-      // console.log(data)
-
       const structured = [];
-      for (let i = 1; i <=parseInt(noOfQue); i++) {
+      for (let i = 1; i <= parseInt(noOfQue); i++) {
         structured.push({
           id: i,
           question: data[`question${i}`],
@@ -47,12 +96,10 @@ const QuestionForm = ({ questions, setQuestions, selectedAnswers, setSelectedAns
         });
       }
 
-      // console.log(structured)
-
       setQuestions(structured);
       setSelectedAnswers({});
       setShowResults(false);
-      setShowQuiz(true); // Switch to quiz page
+      setShowQuiz(true);
     } catch (error) {
       console.error('Error:', error);
     }
@@ -60,38 +107,36 @@ const QuestionForm = ({ questions, setQuestions, selectedAnswers, setSelectedAns
 
   return (
     <div>
-      {/* App header outside form container */}
       <div className="app-header">
         <h1>💡 MindSpark – Intelligent MCQs for You</h1>
       </div>
-  
-      {/* Main form container below the header */}
+
       <div className="form-container">
         {!showQuiz ? (
           <>
             <h2>QuizIt: Your Style, Your Level</h2>
             <form onSubmit={handleSubmit}>
-              {/* Grade input */}
-              <label>Grade</label>
-              <select value={grade} onChange={(e) => setGrade(e.target.value)}>
-                <option value="">Select Grade</option>
-                <option value="6">6th</option>
-                <option value="7">7th</option>
-                <option value="8">8th</option>
-                <option value="9">9th</option>
-                <option value="10">10th</option>
+              <label>Subject</label>
+              <select value={subject} onChange={handleSubjectChange}>
+                <option value="">Select Subject</option>
+                {Object.keys(subjectTopics).map((subj) => (
+                  <option key={subj} value={subj}>{subj}</option>
+                ))}
               </select>
-  
-              {/* Topic input */}
+
               <label>Topic</label>
-              <input
-                type="text"
+              <select
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                placeholder="e.g. Algebra"
-              />
-  
-              {/* Difficulty input */}
+                disabled={!subject}
+              >
+                <option value="">Select Topic</option>
+                {subject &&
+                  subjectTopics[subject].map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+              </select>
+
               <label>Difficulty</label>
               <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
                 <option value="">Select Difficulty</option>
@@ -99,6 +144,7 @@ const QuestionForm = ({ questions, setQuestions, selectedAnswers, setSelectedAns
                 <option value="medium">Medium</option>
                 <option value="hard">Hard</option>
               </select>
+
               <label>Number of Questions</label>
               <input
                 type="number"
@@ -106,10 +152,9 @@ const QuestionForm = ({ questions, setQuestions, selectedAnswers, setSelectedAns
                 min="1"
                 max="15"
                 onChange={(e) => setNoOfQue(e.target.value)}
-                placeholder="e.g. 5 "
+                placeholder="e.g. 5"
               />
 
-  
               <button type="submit">Generate MCQs</button>
             </form>
           </>
@@ -125,7 +170,6 @@ const QuestionForm = ({ questions, setQuestions, selectedAnswers, setSelectedAns
       </div>
     </div>
   );
-  
 };
 
 export default QuestionForm;

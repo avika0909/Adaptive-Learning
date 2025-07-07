@@ -19,9 +19,6 @@ const ResultPage = ({ questions, selectedAnswers }) => {
     setShowDetailedResult(true);
   };
 
-  const handleSuggestions = () => {
-    alert("📘 Suggestions coming soon!");
-  };
 
   const handleTryAgain = () => {
     navigate('/');
@@ -36,9 +33,24 @@ const ResultPage = ({ questions, selectedAnswers }) => {
         {!showDetailedResult && (
           <button className="show-result-btn" onClick={handleShowResult}>📄 Show Result</button>
         )}
-        <button className="suggestion-btn" onClick={handleSuggestions}>📘 Suggestions</button>
+        {/* <button className="suggestion-btn" onClick={handleSuggestions}>📘 Suggestions</button> */}
         <button className="retry-btn" onClick={handleTryAgain}>🔁 Try Again</button>
       </div>
+      
+        <div className="next-actions">
+  <div className="action-card left-card">
+    <p className="suggested-topic-title">Suggested next topic</p>
+    <p className="suggested-level">Suggested level</p>
+    <button className="learn-btn">Start Learning</button>
+  </div>
+
+  <div className="action-card right-card">
+    <p className="suggested-topic-title">Want to choose on your own?</p>
+    <p className="suggested-level">Start a new journey</p>
+    <button className="select-btn">Select New Topic</button>
+  </div>
+</div>
+
 
       {showDetailedResult && (
         <div className="detailed-results">
