@@ -8,6 +8,7 @@ import json
 import pandas as pd
 import csv
 import joblib
+from datetime import datetime
 
 load_dotenv()
 
@@ -26,7 +27,7 @@ for i in range(0,NO_OF_QUE):
 s += '}'
 
 app = Flask(__name__)
-CORS(app, resources={r"/generate": {"origins": "http://localhost:3000"}})
+CORS(app, origins=["http://localhost:3000"])
 
 # === DSPy MCQ Generator ===
 class MCQQuestionGenerator(dspy.Signature):
@@ -34,6 +35,7 @@ class MCQQuestionGenerator(dspy.Signature):
     You are a helpful teacher. Based on the input (Subject, topic, difficulty, and number of questions), 
     generate that many MCQs with 4 options (A, B, C, D), answers as '1A', '2B', etc., and include explanation.
     Use keys like question1, option1A, option1B, ..., answer1, description1 and so on.
+    Make sure you give new questions everytime according to given time and date provided in the description of the question.
     """
 
     code = dspy.InputField(desc="Subject, Topic, and Difficulty")
@@ -67,7 +69,7 @@ def analyze_code():
         difficulty = data.get('difficulty')
         no_of_questions = int(data.get('noOfQue', 5))
         
-        prompt = f'Subject: {subject} Topic: {topic} Difficulty: {difficulty} Generate {no_of_questions} questions'
+        prompt = f'Subject: {subject} Topic: {topic} Difficulty: {difficulty} Generate {no_of_questions} questions on time: {datetime.now()}'
 
         formatted_output = get_suggestions(prompt)
         formatted_output.update({'status': 'success'})
@@ -94,9 +96,9 @@ encoders = {}
 if os.path.exists(MODEL_PATH) and os.path.exists(ENCODER_PATH):
     model = joblib.load(MODEL_PATH)
     encoders = joblib.load(ENCODER_PATH)
-    print("✅ Model and encoders loaded.")
+    print(" Model and encoders loaded.")
 else:
-    print("⚠️ Model not found. Please train the model separately.")
+    print(" Model not found. Please train the model separately.")
 
 @app.route("/predict", methods=["POST"])
 def predict():

@@ -20,7 +20,7 @@ else:
     print("⚠️ Model not found. Please train the model separately.")
 
 def train_model():
-    df = pd.read_csv('/Users/sudhir/Adaptive-Learning/backend/learning_logs_sample_500.csv')
+    df = pd.read_csv(DATA_PATH)
 
     feature_cols = ['Subject', 'Topic', 'Level', 'Accuracy', 'Time']
     target_cols = ['New_Subject', 'New_Topic', 'New_Level']
@@ -84,8 +84,8 @@ def predict():
         return preds
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        return "error"
 
 if __name__ == "__main__":
-    # train_model()
-    print(predict())
+    train_model()
+    # print(predict())

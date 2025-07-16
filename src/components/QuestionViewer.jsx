@@ -1,19 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './QuestionViewer.css';
 import { useNavigate } from 'react-router-dom'; // for redirecting
 
-const QuestionViewer = ({ questions, selectedAnswers, setSelectedAnswers, showResults, setShowResults }) => {
+const QuestionViewer = ({ questions, selectedAnswers, setSelectedAnswers, showResults, setShowResults, subject, topic, level, noOfQue }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30); // 30 seconds per question
+  const [quizStartTime, setQuizStartTime] = useState(null);
+  const [totalTime, setTotalTime] = useState(0);
+  const timerRef = useRef(null);
   const navigate = useNavigate();
 
   const currentQuestion = questions[currentIndex];
 
-  // Handle timer countdown
+  // Start quiz timer on mount
+  useEffect(() => {
+    if (!quizStartTime) setQuizStartTime(Date.now());
+  }, [quizStartTime]);
+
+  // Handle timer countdown per question
   useEffect(() => {
     if (showResults) return; // Stop timer if results are shown
 
-    const timer = setInterval(() => {
+    timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev === 1) {
           handleNext(); // auto move to next question
@@ -23,13 +31,20 @@ const QuestionViewer = ({ questions, selectedAnswers, setSelectedAnswers, showRe
       });
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => clearInterval(timerRef.current);
   }, [currentIndex, showResults]);
 
   // Reset timer on question change
   useEffect(() => {
     setTimeLeft(30);
   }, [currentIndex]);
+
+  // When quiz ends, calculate total time
+  useEffect(() => {
+    if (showResults && quizStartTime) {
+      setTotalTime(Math.round((Date.now() - quizStartTime) / 1000));
+    }
+  }, [showResults, quizStartTime]);
 
   const handleOptionChange = (qid, option) => {
     setSelectedAnswers((prev) => ({
@@ -52,8 +67,22 @@ const QuestionViewer = ({ questions, selectedAnswers, setSelectedAnswers, showRe
 
   const handleSubmitAnswers = () => {
     setShowResults(true);
-    navigate('/result'); // Redirect to result page
+    // Calculate total time if not already set
+    const timeSpent = quizStartTime ? Math.round((Date.now() - quizStartTime) / 1000) : 0;
+    navigate('/result', {
+      state: {
+        questions,
+        selectedAnswers,
+        subject,
+        topic,
+        level,
+        noOfQue,
+        totalTime: timeSpent
+      }
+    });
   };
+
+  const allAnswered = questions.every(q => selectedAnswers[q.id]);
 
   return (
     <div className="question-card">
@@ -103,6 +132,7 @@ const QuestionViewer = ({ questions, selectedAnswers, setSelectedAnswers, showRe
               ✅ Submit Answers
             </button>
           )
+          
         )}
       </div>
     </div>

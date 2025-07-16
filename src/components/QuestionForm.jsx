@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import './QuestionForm.css';
 import QuestionViewer from './QuestionViewer';
 
 const subjectTopics = {
-  "OS": [
+  "Operating System": [
     "Process Management",
     "Threading & Concurrency",
     "CPU Scheduling",
@@ -56,11 +57,30 @@ const subjectTopics = {
 };
 
 const QuestionForm = ({ questions, setQuestions, selectedAnswers, setSelectedAnswers, showResults, setShowResults }) => {
-  const [subject, setSubject] = useState('');
-  const [topic, setTopic] = useState('');
-  const [difficulty, setDifficulty] = useState('');
-  const [noOfQue, setNoOfQue] = useState(5);
-  const [showQuiz, setShowQuiz] = useState(false);
+  const location = useLocation();
+
+const autoStart = location.state?.autoStart || localStorage.getItem("autoStart") === "true";
+const initialSubject = location.state?.subject || localStorage.getItem("selectedSubject") || '';
+const initialTopic = location.state?.topic || localStorage.getItem("selectedTopic") || '';
+const initialDifficulty = location.state?.level || localStorage.getItem("selectedLevel") || '';
+const initialNoOfQue = location.state?.noOfQue || parseInt(localStorage.getItem("noOfQue")) || 5;
+
+const [subject, setSubject] = useState(initialSubject);
+const [topic, setTopic] = useState(initialTopic);
+const [difficulty, setDifficulty] = useState(initialDifficulty);
+const [noOfQue, setNoOfQue] = useState(initialNoOfQue);
+const [showQuiz, setShowQuiz] = useState(false);
+
+  // const location = useLocation();
+
+useEffect(() => {
+  if (autoStart && subject && topic && difficulty) {
+    setTimeout(() => {
+      handleSubmit({ preventDefault: () => {} });
+    }, 300);
+  }
+}, []); // 👈 Run only once on mount
+
 
   const handleSubjectChange = (e) => {
     setSubject(e.target.value);
@@ -68,7 +88,8 @@ const QuestionForm = ({ questions, setQuestions, selectedAnswers, setSelectedAns
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
+  
     const payload = { subject, topic, difficulty, noOfQue };
 
     try {
@@ -82,6 +103,7 @@ const QuestionForm = ({ questions, setQuestions, selectedAnswers, setSelectedAns
 
       const structured = [];
       for (let i = 1; i <= parseInt(noOfQue); i++) {
+        const answerRaw = data[`answer${i}`];
         structured.push({
           id: i,
           question: data[`question${i}`],
@@ -91,19 +113,29 @@ const QuestionForm = ({ questions, setQuestions, selectedAnswers, setSelectedAns
             C: data[`option${i}C`],
             D: data[`option${i}D`]
           },
-          correct: data[`answer${i}`].replace(/[0-9]/g, '').trim(),
+          correct: answerRaw ? answerRaw.replace(/[0-9]/g, '').trim() : '',
           explanation: data[`description${i}`]
         });
       }
 
+      console.log('Received questions:', structured);
+
       setQuestions(structured);
       setSelectedAnswers({});
       setShowResults(false);
-      setShowQuiz(true);
+      setShowQuiz(true); // This ensures the quiz starts immediately
     } catch (error) {
       console.error('Error:', error);
     }
   };
+
+  const isFormValid =
+    subject &&
+    topic &&
+    difficulty &&
+    noOfQue &&
+    !isNaN(Number(noOfQue)) &&
+    Number(noOfQue) > 0;
 
   return (
     <div>
@@ -145,7 +177,7 @@ const QuestionForm = ({ questions, setQuestions, selectedAnswers, setSelectedAns
                 <option value="hard">Hard</option>
               </select>
 
-              <label>Number of Questions</label>
+              {/* <label>Number of Questions</label>
               <input
                 type="number"
                 value={noOfQue}
@@ -153,9 +185,11 @@ const QuestionForm = ({ questions, setQuestions, selectedAnswers, setSelectedAns
                 max="15"
                 onChange={(e) => setNoOfQue(e.target.value)}
                 placeholder="e.g. 5"
-              />
+              /> */}
 
-              <button type="submit">Generate MCQs</button>
+              <button type="submit" disabled={!isFormValid}>
+                Generate MCQs
+              </button>
             </form>
           </>
         ) : (
@@ -165,6 +199,10 @@ const QuestionForm = ({ questions, setQuestions, selectedAnswers, setSelectedAns
             setSelectedAnswers={setSelectedAnswers}
             showResults={showResults}
             setShowResults={setShowResults}
+            subject={subject}
+            topic={topic}
+            level={difficulty}
+            noOfQue={noOfQue}
           />
         )}
       </div>
